@@ -1,0 +1,5 @@
+.env
+.env.txt
+node_modules/
+data/raw/*.csv
+data/station-facilities.json

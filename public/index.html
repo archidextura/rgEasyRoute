@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>덜 지치는 서울길</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#f3f5f2; --surface:#fff; --fg:#1d2621; --muted:#5d6b63; --line:#d6ddd8;
+  --accent:#3f8f2a; --accent-ink:#fff; --accent-soft:#e3f0dc;
+  --i0:#cfd8de; --i1:#9cc7a0; --i2:#e8b04a; --i3:#d4583a;
+  --good:#2f7d32; --warn:#b06b00; --bad:#b3261e;
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#141a17; --surface:#1c2420; --fg:#e4ebe6; --muted:#97a69d; --line:#2e3a34;
+  --accent:#6cc04f; --accent-ink:#0f1a0c; --accent-soft:#233420;
+  --i0:#3b4a52; --i1:#4f8a57; --i2:#c9922f; --i3:#e0694a;
+  --good:#7ccf7f; --warn:#e5a64a; --bad:#f08a80; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;padding:0 16px 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{margin:0;line-height:1.3;text-wrap:balance}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+header{padding-top:32px}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--accent);font-weight:600}
+header h1{font-size:clamp(26px,5vw,36px);margin-top:4px}
+header p{color:var(--muted);margin:8px 0 0;max-width:62ch}
+.status{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--muted)}
+.pill.on{border-color:var(--accent);color:var(--good)}
+.banner{border:1px solid var(--warn);color:var(--warn);border-radius:8px;padding:10px 14px;font-size:14px}
+.banner.err{border-color:var(--bad);color:var(--bad)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px 20px}
+.ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ctl>label,.ctl>.lab{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+.wide{grid-column:1/-1}
+.od{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.field{display:flex;gap:6px}
+.field input{flex:1;min-width:0}
+.pick{border:1px solid var(--line);background:transparent;border-radius:8px;padding:0 10px;cursor:pointer;font-size:13px;white-space:nowrap}
+.pick[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.resolved{font-size:12px;color:var(--muted);min-height:1.2em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+input[type=text],input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.go{background:var(--accent);color:var(--accent-ink);border:0;border-radius:8px;padding:9px 18px;font-weight:600;cursor:pointer;align-self:start;margin-top:24px}
+.go:disabled{opacity:.5;cursor:wait}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:4px 11px;cursor:pointer;font-size:13px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:7px 6px;cursor:pointer;font-size:13.5px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+input[type=range]{accent-color:var(--accent);width:100%}
+#map{height:360px;min-height:360px;flex-shrink:0;border-radius:10px;border:1px solid var(--line);overflow:hidden}
+.map-hint{font-size:13px;color:var(--muted);margin-top:-16px}
+.res-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 20px;align-items:end}
+.res-head p{margin:2px 0 0;color:var(--muted);font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block;vertical-align:-1px;margin-right:4px}
+.routes{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;grid-template-columns:40px 1fr auto;gap:4px 16px}
+.card.best{border-color:var(--accent)}
+.card.sel{box-shadow:0 0 0 2px var(--accent)}
+.rank{font-family:var(--f-num);font-size:22px;font-weight:600;color:var(--muted)}
+.card.best .rank{color:var(--accent)}
+.card h3{font-size:16.5px;font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--good)}
+.tag.warn{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.kcal{text-align:right}
+.kcal b{font-family:var(--f-num);font-size:28px;font-weight:600;line-height:1}
+.kcal small{display:block;font-size:12px;color:var(--muted)}
+.body{grid-column:2/-1;display:flex;flex-direction:column;gap:12px;margin-top:6px;min-width:0}
+.stats{display:flex;flex-wrap:wrap;gap:4px 18px;font-size:13.5px;color:var(--muted)}
+.stats b{color:var(--fg);font-family:var(--f-num);font-weight:600}
+.strip{display:flex;height:24px;border-radius:6px;overflow:hidden;gap:2px}
+.strip div{min-width:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d2621;overflow:hidden;white-space:nowrap}
+.delta{font-size:13.5px}.up{color:var(--warn)}.down{color:var(--good)}
+.tip{font-size:14px;background:var(--accent-soft);border-radius:8px;padding:9px 12px;margin:0}
+.tip b{color:var(--good)}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.show{border:1px solid var(--line);background:transparent;border-radius:6px;padding:3px 10px;font-size:13px;cursor:pointer}
+details summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.tbl{overflow-x:auto;margin-top:6px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:500px}
+th,td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line)}
+th{font-size:11.5px;color:var(--muted)}
+.r{text-align:right;font-family:var(--f-num)}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px}
+.foot{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+@media (max-width:640px){.od{grid-template-columns:1fr}.go{margin-top:0}.card{grid-template-columns:30px 1fr}.kcal{grid-column:2;text-align:left}.body{grid-column:1/-1}#map{height:280px;min-height:280px}}
+</style>
+<!--TMAP_SDK-->
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">ODsay 대중교통 경로 + TMAP 보행자 경로·지도 + 고도 데이터</div>
+    <h1>덜 지치는 서울길</h1>
+    <p>버스·지하철 조합마다 걷는 구간의 오르막, 역 계단, 환승, 서서 가는 시간을 칼로리로 바꿔 덜 힘든 순서로 정렬합니다.</p>
+    <div class="status" id="status"></div>
+  </header>
+
+  <div id="banner" hidden></div>
+
+  <form class="panel" id="form">
+    <div class="ctl wide">
+      <div class="od">
+        <div class="ctl"><label for="from">출발</label>
+          <div class="field"><input id="from" type="text" value="서울역" autocomplete="off"><button type="button" class="pick" data-target="from" aria-pressed="false" hidden>지도에서</button></div>
+          <div class="resolved" id="fromResolved"></div></div>
+        <div class="ctl"><label for="to">도착</label>
+          <div class="field"><input id="to" type="text" value="해방촌 신흥시장" autocomplete="off"><button type="button" class="pick" data-target="to" aria-pressed="false" hidden>지도에서</button></div>
+          <div class="resolved" id="toResolved"></div></div>
+        <button class="go" id="go" type="submit">경로 찾기</button>
+      </div>
+    </div>
+    <div class="ctl wide"><span class="lab">예시</span><div class="chips" id="examples"></div></div>
+    <div class="ctl"><label for="weight">몸무게 (kg)</label><input id="weight" type="number" min="30" max="150" value="65"></div>
+    <div class="ctl"><label for="bag">짐 무게 <span id="bagVal">0 kg</span></label><input id="bag" type="range" min="0" max="20" value="0"></div>
+    <div class="ctl"><span class="lab">시간대 (좌석 확률)</span>
+      <div class="seg" data-key="peak"><button type="button" data-v="0" aria-pressed="true">평시</button><button type="button" data-v="1" aria-pressed="false">출퇴근</button></div></div>
+    <div class="ctl"><span class="lab">역 안 오르내리기</span>
+      <div class="seg" data-key="vert"><button type="button" data-v="data" aria-pressed="false" id="vertData" hidden>역별 실제 시설</button><button type="button" data-v="esc" aria-pressed="true">항상 에스컬레이터</button><button type="button" data-v="stairs" aria-pressed="false">항상 계단</button></div></div>
+    <div class="ctl wide"><span class="lab">정렬 기준</span>
+      <div class="seg" data-key="sort"><button type="button" data-v="kcal" aria-pressed="true">최소 체력</button><button type="button" data-v="knee" aria-pressed="false">무릎 보호</button><button type="button" data-v="time" aria-pressed="false">최단 시간</button><button type="button" data-v="xfer" aria-pressed="false">최소 환승</button></div></div>
+  </form>
+
+  <div id="map" hidden></div>
+  <p class="map-hint" id="mapHint" hidden>점선은 걷는 구간(색이 진할수록 힘듦), 실선은 버스·지하철(초록은 마을버스)입니다. 카드의 ‘지도에 표시’를 누르면 그 경로로 바뀝니다.</p>
+
+  <section id="results" hidden>
+    <div class="res-head">
+      <div><h2 id="resTitle" style="font-size:20px"></h2><p id="resNote"></p></div>
+      <div class="legend"><span><i style="background:var(--i0)"></i>휴식 수준</span><span><i style="background:var(--i1)"></i>가벼움</span><span><i style="background:var(--i2)"></i>보통</span><span><i style="background:var(--i3)"></i>힘듦</span></div>
+    </div>
+    <div class="routes" id="routes" style="margin-top:14px"></div>
+  </section>
+
+  <p class="foot">칼로리는 쉴 때보다 더 쓴 양(net kcal)입니다. 걷기는 ACSM 보행 공식, 계단은 들어 올린 일 ÷ 근육 효율 25%, 대기·에스컬레이터·차내는 MET 값으로 셉니다.
+  역 깊이(지상↔대합실 7m, 대합실↔승강장 8m, 환승 6m), 대기 시간, 좌석 확률은 가정값이고, 고도는 90m 격자 지형 데이터를 TMAP 보행자 경로(없으면 직선)를 따라 샘플링한 추정치입니다. 경로: ODsay LAB · 걷는 길·지도: TMAP · 장소 검색: 카카오/TMAP · 고도: Open-Meteo.</p>
+</div>
+
+<script>
+/* ---------- 가정값 ---------- */
+const A = {
+  depthStreet: 7, depthPlatform: 8, depthXfer: 6,   // 지상↔대합실, 대합실↔승강장, 환승 (m)
+  wait: { subway: 3, bus: 5, maeul: 7 },
+  stand: { subway: [0.55, 0.9], bus: [0.35, 0.7], maeul: [0.25, 0.5] },
+  walkDetour: 1.3, walkOnlyMaxKm: 3,
+};
+const BUS_TYPE = {1:'일반',2:'좌석',3:'마을',4:'직행좌석',5:'공항',6:'간선급행',10:'외곽',11:'간선',12:'지선',13:'순환',14:'광역',15:'급행',26:'급행간선'};
+const EXAMPLES = [['서울역','해방촌 신흥시장'],['안국역','삼청공원'],['강남역','혜화역'],['한성대입구역','길상사']];
+
+/* ---------- 칼로리 모델 ---------- */
+const tobler = g => 6*Math.exp(-3.5*Math.abs(g+0.05))*0.9;
+function walkPiece(m, dh, load){
+  const g = m>0 ? dh/m : 0, v = tobler(g)*1000/60, min = m/v;
+  const vo2 = 0.1*v + (g>0 ? 1.8*v*g : Math.max(0.9*v*g, -0.04*v));
+  return {min, kcal: vo2*load/1000*5*min, g};
+}
+const metNet = (met, body, min) => (met-1)*body*min/60;
+
+function segCost(s, P){
+  const body=P.w, load=P.w+P.bag;
+  if(s.t==='walk'){
+    const n = s.elev ? s.elev.length-1 : 1, piece = s.m/n;
+    let min=0,kcal=0,knee=0,up=0,down=0;
+    for(let i=0;i<n;i++){
+      const dh = s.elev ? s.elev[i+1]-s.elev[i] : 0;
+      const r = walkPiece(piece, dh, load);
+      min+=r.min; kcal+=r.kcal; knee+=r.kcal*(r.g<-0.03?1.5:1);
+      if(dh>0) up+=dh; else down-=dh;
+    }
+    return {min,kcal,knee,walk:s.m,rise:up,drop:down};
+  }
+  if(s.t==='vert'){
+    const mode = vertMode(s,P);
+    if(mode==='elev'){ const min=1.5+s.h/1/60+0.3, k=metNet(1.3,body,min); return {min,kcal:k,knee:k}; }
+    if(mode==='esc'){ const min=s.h/0.25/60+0.2, k=metNet(1.3,body,min); return {min,kcal:k,knee:k}; }
+    if(s.dir==='up'){ const min=s.h/0.25/60, k=load*9.81*s.h/(0.25*4184)+metNet(1.3,body,min); return {min,kcal:k,knee:k*1.5,stairs:s.h,rise:s.h}; }
+    const min=s.h/0.33/60, k=load*9.81*s.h/(0.25*4184)/3+metNet(1.3,body,min); return {min,kcal:k,knee:k*3,stairs:s.h};
+  }
+  if(s.t==='wait'){ const k=metNet(1.3,body,s.min); return {min:s.min,kcal:k,knee:k}; }
+  if(s.t==='ride'){ const p=A.stand[s.kind][P.peak]; const k=(p*0.6+(1-p)*0.3)*body*s.min/60; return {min:s.min,kcal:k,knee:k,stand:p,ride:1}; }
+}
+
+/* ---------- 역 엘리베이터·에스컬레이터 ---------- */
+const FAC = {stations:{}, types:[], labelsTransfer:false};
+const stnName = n => /역$/.test(n) ? n : n+'역';
+const normStation = n => String(n||'').replace(/\s/g,'').replace(/\([^)]*\)/g,'').replace(/역$/,'');
+const lineOf = name => { const m = String(name).match(/(\d+)호선/); return m ? `${+m[1]}호선` : String(name).replace(/\s/g,''); };
+// 이 역·호선의 이 구간(street: 지상↔대합실, platform: 대합실↔승강장, transfer: 환승)을 무엇으로 오르내리나
+function access(stn, line, sec){
+  const rec = FAC.stations[normStation(stn)];
+  if(!rec) return {mode:'unknown'};
+  let fac = rec.fac.filter(f=>f.type==='elev'||f.type==='esc');
+  const mine = fac.filter(f=>f.line===line), noLine = fac.filter(f=>!f.line);
+  if(mine.length) fac = mine.concat(noLine);
+  else if(fac.some(f=>f.line)) return {mode:'unknown', why:'이 호선 정보 없음'};   // 다른 운영사 노선 등
+  const exits = [...new Set(fac.filter(f=>f.type==='elev' && (f.sec==='street'||f.sec==='both') && f.exit).map(f=>f.exit))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+  const here = fac.filter(f=>f.sec===sec || (f.sec==='both' && sec!=='transfer'));
+  if(here.length) return {mode: here.some(f=>f.type==='esc')?'esc':'elev', exits};
+  const unk = fac.filter(f=>f.sec==='?');
+  if(unk.length) return {mode: unk.some(f=>f.type==='esc')?'esc':'elev', exits, why:'위치 미분류'};
+  if(sec==='transfer' && !FAC.labelsTransfer) return {mode:'unknown', why:'환승 시설 구분 없음'};
+  if(FAC.types.includes('elev') && FAC.types.includes('esc')) return {mode:'stairs', exits};
+  return {mode:'unknown'};
+}
+// 화면 설정까지 반영한 최종 이동 수단
+function vertMode(s,P){
+  if(P.vert!=='data') return P.vert;
+  const m = s.acc?.mode; return !m || m==='unknown' ? 'esc' : m;
+}
+function vertNote(s,P){
+  const name = {esc:'에스컬레이터',elev:'엘리베이터',stairs:'계단'};
+  if(P.vert!=='data') return `${name[P.vert]} (설정)`;
+  const a = s.acc || {mode:'unknown'};
+  if(a.mode==='unknown') return `시설 정보 없음${a.why?` (${a.why})`:''} → 에스컬레이터 가정`;
+  if(a.mode==='stairs') return '계단 (시설 정보에 없음)';
+  return name[a.mode] + (a.mode==='elev'&&s.sec==='street'&&a.exits?.length?` (${a.exits.join('·')}번 출구)`:'') + (a.why?` · ${a.why}`:'');
+}
+
+/* ---------- ODsay 응답 → 구간 목록 ---------- */
+const pt = (x,y) => ({lat:+y, lon:+x});
+function haversine(a,b){ const R=6371000, r=Math.PI/180, dLat=(b.lat-a.lat)*r, dLon=(b.lon-a.lon)*r;
+  const h=Math.sin(dLat/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLon/2)**2; return 2*R*Math.asin(Math.sqrt(h)); }
+function samplePts(a,b,m){ const n=Math.max(2,Math.min(20,Math.ceil(m/100)));
+  return Array.from({length:n+1},(_,i)=>({lat:a.lat+(b.lat-a.lat)*i/n, lon:a.lon+(b.lon-a.lon)*i/n})); }
+
+function laneInfo(sp){
+  const L = sp.lane?.[0] || {};
+  if(sp.trafficType===1){ const n=(L.name||'지하철').replace('수도권 ',''); return {kind:'subway', name:n, short:n}; }
+  return {kind: L.type===3?'maeul':'bus', name:`${BUS_TYPE[L.type]||''}버스 ${L.busNo||''}`.trim(), short:L.busNo||'버스'};
+}
+
+function buildPlan(path, O, D){
+  const sps = path.subPath, segs=[];
+  const transit = sps.map((sp,i)=>sp.trafficType!==3?i:-1).filter(i=>i>=0);
+  sps.forEach((sp,i)=>{
+    const prev = transit.filter(j=>j<i).pop(), next = transit.find(j=>j>i);
+    const P = prev!=null ? sps[prev] : null, N = next!=null ? sps[next] : null;
+    if(sp.trafficType===3){
+      if(!sp.distance) return;
+      if(P?.trafficType===1 && N?.trafficType===1){ segs.push({t:'walk', m:sp.distance, l:`${P.endName} 환승 통로`}); return; }
+      const a = P ? pt(P.endX,P.endY) : O, b = N ? pt(N.startX,N.startY) : D;
+      const to = N ? (N.trafficType===1 ? stnName(N.startName) : `${N.startName} 정류장`)+'까지' : '도착지까지';
+      segs.push({t:'walk', m:sp.distance, pts:samplePts(a,b,sp.distance), l:`도보: ${to}`});
+      return;
+    }
+    const info = laneInfo(sp);
+    const fromSubway = P?.trafficType===1 && sp.trafficType===1;
+    const toSubway = N?.trafficType===1 && sp.trafficType===1;
+    const line = lineOf(info.name);
+    const V = (dir,h,sec,stn,l) => ({t:'vert',dir,h,sec,stn,line,l,acc:access(stn,line,sec)});
+    if(sp.trafficType===1){
+      if(fromSubway) segs.push(V('up',A.depthXfer,'transfer',sp.startName,`${stnName(sp.startName)} 환승 오르내리기`));
+      else segs.push(V('down',A.depthStreet,'street',sp.startName,`${stnName(sp.startName)} 지상 → 대합실`), V('down',A.depthPlatform,'platform',sp.startName,`${stnName(sp.startName)} 대합실 → 승강장`));
+    }
+    segs.push({t:'wait', min:A.wait[info.kind], l:`${info.name} 대기 (가정 ${A.wait[info.kind]}분)`});
+    const stops = sp.passStopList?.stations?.map(s=>pt(s.x,s.y));
+    segs.push({t:'ride', kind:info.kind, mode:info.short, min:sp.sectionTime,
+      line: stops?.length>1 ? stops : [pt(sp.startX,sp.startY), pt(sp.endX,sp.endY)],
+      l:`${info.name}: ${sp.startName} → ${sp.endName} (${sp.stationCount}개 ${sp.trafficType===1?'역':'정류장'})`});
+    if(sp.trafficType===1 && !toSubway)
+      segs.push(V('up',A.depthPlatform,'platform',sp.endName,`${stnName(sp.endName)} 승강장 → 대합실`), V('up',A.depthStreet,'street',sp.endName,`${stnName(sp.endName)} 대합실 → 지상`));
+  });
+  return {name: sps.filter(s=>s.trafficType!==3).map(s=>laneInfo(s).name).join(' → '), segs, O, D,
+    odsayMin: path.info.totalTime, xfer: Math.max(0,transit.length-1),
+    hasMaeul: sps.some(s=>s.trafficType===2 && s.lane?.[0]?.type===3), payment: path.info.payment};
+}
+
+function walkOnlyPlan(O,D){
+  const straight = haversine(O,D); if(straight/1000 > A.walkOnlyMaxKm) return null;
+  const m = Math.round(straight*A.walkDetour/10)*10;
+  return {name:'전부 걷기', walkOnly:true, O, D, xfer:0, segs:[{t:'walk', m, pts:samplePts(O,D,m), l:'출발지 → 도착지 (TMAP 보행자 경로, 없으면 직선거리 × 1.3)'}]};
+}
+
+/* ---------- API ---------- */
+async function api(url){
+  const r = await fetch(url); const j = await r.json().catch(()=>({error:{msg:`서버 응답 오류 (HTTP ${r.status})`}}));
+  if(j.error){ const e = Array.isArray(j.error) ? j.error[0] : j.error; const err = new Error(e.msg || e.message || '알 수 없는 오류'); err.code = e.code; throw err; }
+  return j;
+}
+async function geocode(text){
+  const m = text.match(/^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/);
+  if(m) return {lat:+m[1], lon:+m[2], name:'지도에서 고른 지점'};
+  return api('/api/geo?q='+encodeURIComponent(text));
+}
+async function fillElevations(plans){
+  const walks = plans.flatMap(p=>p.segs.filter(s=>s.pts)), all = walks.flatMap(s=>s.pts), out=[];
+  for(let i=0;i<all.length;i+=100){
+    const c = all.slice(i,i+100);
+    out.push(...(await api(`/api/elev?lat=${c.map(p=>p.lat.toFixed(5))}&lon=${c.map(p=>p.lon.toFixed(5))}`)).elevation);
+  }
+  let k=0; walks.forEach(s=>{ s.elev = out.slice(k, k+s.pts.length); k+=s.pts.length; });
+}
+
+/* ---------- TMAP 보행자 경로 ---------- */
+// 골목길 좌표를 받아 약 50m 간격으로 다시 샘플링한다 (고도 조회용). 실패하면 직선 추정을 그대로 쓴다.
+function resample(coords, step){
+  const P = coords.map(([lon,lat])=>({lat,lon})), cum=[0];
+  for(let i=1;i<P.length;i++) cum.push(cum[i-1]+haversine(P[i-1],P[i]));
+  const total = cum[cum.length-1], n = Math.max(2, Math.min(40, Math.ceil(total/step))), out=[];
+  for(let k=0,j=0;k<=n;k++){
+    const d = total*k/n; while(j<P.length-2 && cum[j+1]<d) j++;
+    const t = cum[j+1]>cum[j] ? (d-cum[j])/(cum[j+1]-cum[j]) : 0;
+    out.push({lat:P[j].lat+(P[j+1].lat-P[j].lat)*t, lon:P[j].lon+(P[j+1].lon-P[j].lon)*t});
+  }
+  return {pts:out, total};
+}
+async function fillWalkRoutes(plans){
+  const walks = plans.flatMap(p=>p.segs.filter(s=>s.pts && s.m>=40));
+  let ok=0, fail=0;
+  for(let i=0;i<walks.length;i+=3){            // 3개씩 나눠 호출
+    await Promise.all(walks.slice(i,i+3).map(async s=>{
+      const a=s.pts[0], b=s.pts[s.pts.length-1];
+      try{
+        const r = await api(`/api/walk?sx=${a.lon}&sy=${a.lat}&ex=${b.lon}&ey=${b.lat}`);
+        if(r.coords.length<2) throw 0;
+        const {pts,total} = resample(r.coords, 50);
+        s.pts = pts; s.geom = r.coords.map(([lon,lat])=>({lat,lon})); s.m = Math.round(r.distance || total); s.real = true; ok++;
+      }catch{ fail++; }
+    }));
+  }
+  return {ok, fail};
+}
+
+/* ---------- TMAP 지도 ---------- */
+const map = {obj:null, layers:[], picking:null};
+function initMap(){
+  if(!window.Tmapv2){ banner('TMAP 지도를 불러오지 못했습니다. TMAP_APP_KEY와, SK open API 콘솔에서 Web 지도(JavaScript) 사용 신청이 되어 있는지 확인해 주세요.', true); return; }
+  $('map').hidden=false;
+  // 높이를 '100%'로 주면 부모에 높이가 없어 0이 되므로, CSS로 정한 픽셀 높이를 그대로 넘긴다
+  const h = $('map').clientHeight || 360;
+  map.obj = new Tmapv2.Map('map', {center:new Tmapv2.LatLng(37.5665,126.978), width:'100%', height:h+'px', zoom:13, zoomControl:true});
+  document.querySelectorAll('.pick').forEach(b=>b.hidden=false);
+  map.obj.addListener('click', e=>{
+    if(!map.picking) return;
+    const ll=e.latLng; $(map.picking).value=`${ll.lat().toFixed(5)},${ll.lng().toFixed(5)}`;
+    $(map.picking+'Resolved').textContent='지도에서 고른 지점';
+    setPicking(null);
+  });
+}
+function setPicking(id){
+  map.picking=id;
+  document.querySelectorAll('.pick').forEach(b=>b.setAttribute('aria-pressed', b.dataset.target===id));
+  if(id) $('map').scrollIntoView({behavior:'smooth',block:'center'});
+}
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function drawRoute(x, P){
+  if(!map.obj) return;
+  map.layers.forEach(l=>l.setMap(null)); map.layers=[];
+  const bounds = new Tmapv2.LatLngBounds(), LL = p => new Tmapv2.LatLng(p.lat,p.lon);
+  x.segs.forEach(g=>{
+    const pts = g.s.geom || g.s.pts || g.s.line; if(!pts) return;
+    const path = pts.map(LL); path.forEach(p=>bounds.extend(p));
+    const ride = g.s.t==='ride';
+    map.layers.push(new Tmapv2.Polyline({map:map.obj, path, strokeWeight: ride?6:5,
+      strokeColor: ride ? (g.s.kind==='maeul'?'#3f8f2a':'#2f5fb3') : cssVar(intensity(g,P).slice(4,-1)),
+      strokeStyle: ride ? 'solid' : 'dash'}));
+  });
+  [[x.plan.O,'출발'],[x.plan.D,'도착']].forEach(([p,t])=>{
+    bounds.extend(LL(p));
+    map.layers.push(new Tmapv2.Marker({map:map.obj, position:LL(p), title:t, label:`<span style="padding:2px 6px;font-weight:600">${t}</span>`}));
+  });
+  map.obj.fitBounds(bounds);
+}
+
+/* ---------- 평가·화면 ---------- */
+const st = {peak:0, vert:'esc', sort:'kcal', plans:null, demo:false, sel:null, tmap:false};
+const $ = id => document.getElementById(id);
+const fmt = (n,d=0) => n.toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:d});
+const params = () => ({w: Math.min(150,Math.max(30,+$('weight').value||65)), bag:+$('bag').value, peak:st.peak, vert:st.vert});
+
+function evaluate(plan, P){
+  plan.segs.forEach(s=>{ if(s.t==='vert') s.acc = access(s.stn, s.line, s.sec); });   // 시설 데이터가 늦게 와도 반영
+  const segs = plan.segs.map(s=>({s,...segCost(s,P)}));
+  const sum = k => segs.reduce((a,x)=>a+(x[k]||0),0);
+  return {plan, segs, kcal:sum('kcal'), knee:sum('knee'), min: plan.odsayMin ?? sum('min'),
+    walk:sum('walk'), rise:sum('rise'), stairs:sum('stairs'), xfer:plan.xfer};
+}
+function intensity(x,P){ const perMin = x.kcal/Math.max(x.min,0.01)*65/P.w;
+  return perMin<0.6?'var(--i0)':perMin<3?'var(--i1)':perMin<5?'var(--i2)':'var(--i3)'; }
+
+function tipsFor(x, res){
+  const tips=[], fastest = res.reduce((a,b)=>b.min<a.min?b:a), walkMax = res.reduce((a,b)=>b.rise>a.rise?b:a);
+  if(x.plan.hasMaeul && walkMax!==x && walkMax.rise-x.rise>=15)
+    tips.push(`마을버스로 오르막 ${fmt(walkMax.rise-x.rise)}m를 넘깁니다. ‘${walkMax.plan.name}’보다 ${fmt(walkMax.kcal-x.kcal)} kcal 덜 듭니다.`);
+  if(x!==fastest && x.kcal < fastest.kcal-5)
+    tips.push(`가장 빠른 경로보다 ${fmt(x.min-fastest.min)}분 더 걸리지만 ${fmt(fastest.kcal-x.kcal)} kcal를 아낍니다.`);
+  if(params().vert==='data'){
+    const out = [...x.segs].reverse().find(g=>g.s.t==='vert' && g.s.sec==='street' && g.s.dir==='up');
+    if(out?.s.acc.exits?.length) tips.push(`${stnName(out.s.stn)}에서 나갈 때 엘리베이터는 ${out.s.acc.exits.join('·')}번 출구 쪽에 있습니다.`);
+    const st = x.segs.filter(g=>g.s.t==='vert' && g.s.acc?.mode==='stairs');
+    if(st.length) tips.push(`${[...new Set(st.map(g=>stnName(g.s.stn)))].join(', ')}의 일부 구간은 시설 정보에 에스컬레이터·엘리베이터가 없어 계단으로 계산했습니다.`);
+  }
+  const hill = x.segs.find(g=>g.s.t==='walk' && g.rise>=20);
+  if(hill && !x.plan.walkOnly) tips.push(`‘${hill.s.l}’ 구간에 오르막 ${fmt(hill.rise)}m가 있습니다. 근처 마을버스 정류장이 있는지 확인해 보세요.`);
+  return tips;
+}
+
+function render(){
+  if(!st.plans) return;
+  const P = params(), res = st.plans.map(p=>evaluate(p,P));
+  const key = {kcal:x=>x.kcal, knee:x=>x.knee, time:x=>x.min, xfer:x=>x.xfer*1000+x.kcal}[st.sort];
+  const sorted = [...res].sort((a,b)=>key(a)-key(b));
+  const base = res.reduce((a,b)=>b.min<a.min?b:a), minOf = k => Math.min(...res.map(x=>x[k]));
+  if(st.sel==null || !st.plans.includes(st.sel)) st.sel = sorted[0].plan;
+  $('routes').innerHTML = sorted.map((x,i)=>{
+    const tags=[];
+    if(x.kcal===minOf('kcal')) tags.push('<span class="tag">최소 체력</span>');
+    if(x.knee===minOf('knee')) tags.push('<span class="tag">무릎 부담 최소</span>');
+    if(x===base) tags.push('<span class="tag">최단 시간</span>');
+    if(x.plan.hasMaeul) tags.push('<span class="tag">마을버스</span>');
+    if(x.rise>=30) tags.push(`<span class="tag warn">오르막 ${fmt(x.rise)}m</span>`);
+    if(x.stairs>=10) tags.push(`<span class="tag warn">계단 ${fmt(x.stairs)}m</span>`);
+    const dk=x.kcal-base.kcal, dm=x.min-base.min;
+    const delta = x===base ? '비교 기준 (가장 빠른 경로)' :
+      `가장 빠른 경로 대비 <b class="${dk<0?'down':'up'}">${dk<0?'−':'+'}${fmt(Math.abs(dk))} kcal</b> · <b class="${dm>0?'up':'down'}">${dm>0?'+':'−'}${fmt(Math.abs(dm))}분</b>`;
+    const total = x.segs.reduce((a,g)=>a+g.min,0);
+    const strip = x.segs.map(g=>{ const w=g.min/total*100;
+      const label = g.s.t==='ride'?g.s.mode:g.s.t==='vert'?{esc:'에스컬',elev:'엘베',stairs:'계단'}[vertMode(g.s,P)]:g.s.t==='walk'?'도보':'대기';
+      return `<div style="flex:0 0 calc(${w.toFixed(2)}% - 2px);background:${intensity(g,P)}" title="${g.s.l} · ${fmt(g.min,1)}분 · ${fmt(g.kcal,1)} kcal">${w>9?label:''}</div>`; }).join('');
+    const rows = x.segs.map(g=>`<tr><td><span class="dot" style="background:${intensity(g,P)}"></span>${g.s.l}${g.rise>=1&&g.s.t==='walk'?` <span style="color:var(--muted)">(오르막 ${fmt(g.rise)}m · 내리막 ${fmt(g.drop)}m)</span>`:''}${g.stand!=null?` <span style="color:var(--muted)">(서서 갈 확률 ${fmt(g.stand*100)}%)</span>`:''}${g.s.t==='vert'?` <span style="color:var(--muted)">· ${vertNote(g.s,P)}</span>`:''}</td><td class="r">${fmt(g.min,1)}</td><td class="r">${fmt(g.kcal,1)}</td></tr>`).join('');
+    const tips = tipsFor(x,res).map(t=>`<p class="tip"><b>묘수</b> ${t}</p>`).join('');
+    const idx = st.plans.indexOf(x.plan);
+    return `<article class="card${i===0?' best':''}${x.plan===st.sel&&map.obj?' sel':''}">
+      <div class="rank">${i+1}</div>
+      <div><h3>${x.plan.name}</h3><div class="tags">${tags.join('')}</div></div>
+      <div class="kcal"><b>${fmt(x.kcal)}</b><small>kcal 추가 소모</small>${st.sort==='knee'?`<small>무릎 부담 ${fmt(x.knee)}</small>`:''}</div>
+      <div class="body">
+        <div class="stats"><span>소요 <b>${fmt(x.min)}분</b></span><span>도보 <b>${fmt(x.walk)}m</b></span><span>오르막 <b>${fmt(x.rise)}m</b></span><span>계단 <b>${fmt(x.stairs)}m</b></span><span>환승 <b>${x.xfer}회</b></span>${x.plan.payment?`<span>요금 <b>${fmt(x.plan.payment)}원</b></span>`:''}</div>
+        <div class="strip" role="img" aria-label="구간별 시간과 체력 강도">${strip}</div>
+        <div class="delta">${delta}</div>${tips}
+        <div class="row">${map.obj?`<button type="button" class="show" data-idx="${idx}">지도에 표시</button>`:''}
+          <details><summary>구간별 보기</summary><div class="tbl"><table><thead><tr><th>구간</th><th class="r">분</th><th class="r">kcal</th></tr></thead><tbody>${rows}</tbody></table></div></details></div>
+      </div></article>`;
+  }).join('');
+  const selRes = res.find(x=>x.plan===st.sel); if(selRes) drawRoute(selRes, P);
+}
+
+function banner(msg, err){ const b=$('banner'); b.hidden=!msg; b.className='banner'+(err?' err':''); b.innerHTML=msg||''; }
+
+async function search(e){
+  e?.preventDefault(); setPicking(null);
+  $('go').disabled=true; banner('');
+  try{
+    const [O,D] = await Promise.all([geocode($('from').value), geocode($('to').value)]);
+    $('fromResolved').textContent = O.name; $('toResolved').textContent = D.name;
+    let plans=[], note='';
+    try{
+      const r = await api(`/api/route?SX=${O.lon}&SY=${O.lat}&EX=${D.lon}&EY=${D.lat}`);
+      st.demo = !!r.demo;
+      plans = (r.result?.path||[]).slice(0,6).map(p=>buildPlan(p,O,D));
+    }catch(err){
+      if(String(err.code)==='-98') note='출발지와 도착지가 700m 이내라 ODsay가 대중교통 경로를 주지 않았습니다. 걷기만 비교합니다.';
+      else throw new Error('ODsay 오류: '+err.message+(String(err.code)==='500'||/key|ApiKey/i.test(err.message)?' (Server 키에 등록한 공인 IP가 지금 PC의 IP와 같은지 확인해 주세요.)':''));
+    }
+    const w = walkOnlyPlan(O,D); if(w) plans.push(w);
+    if(!plans.length) throw new Error('경로를 찾지 못했습니다.');
+    const wr = st.tmap ? await fillWalkRoutes(plans) : {ok:0, fail:0};
+    let elevOk = true;
+    try{ await fillElevations(plans); }catch{ elevOk=false; }
+    st.plans = plans; st.sel = null;
+    $('resTitle').textContent = `${$('from').value} → ${$('to').value}`;
+    $('resNote').textContent = note || `ODsay 경로 ${plans.filter(p=>!p.walkOnly).length}개${w?' + 전부 걷기':''} · 직선거리 ${fmt(haversine(O,D)/1000,1)}km`;
+    const warns=[];
+    if(st.demo) warns.push('<b>데모 모드</b>: ODSAY_KEY가 없어 서울역 → 해방촌 예시 응답을 보여 줍니다.');
+    if(wr.fail) warns.push(`걷는 구간 ${wr.fail}곳은 TMAP 보행자 경로를 받지 못해 직선으로 추정했습니다.`);
+    if(!elevOk) warns.push('고도 데이터를 받지 못해 모든 도보 구간을 평지로 계산했습니다.');
+    banner(warns.join('<br>'));
+    $('results').hidden=false; $('mapHint').hidden=!map.obj; render();
+  }catch(err){ banner(err.message, true); }
+  finally{ $('go').disabled=false; }
+}
+
+/* ---------- 이벤트 ---------- */
+$('examples').innerHTML = EXAMPLES.map(([a,b])=>`<button type="button" class="chip" data-a="${a}" data-b="${b}">${a} → ${b}</button>`).join('');
+$('examples').addEventListener('click',e=>{const c=e.target.closest('.chip'); if(!c) return; $('from').value=c.dataset.a; $('to').value=c.dataset.b; search();});
+document.querySelectorAll('.seg').forEach(g=>g.addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return;
+  g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  st[g.dataset.key] = g.dataset.key==='peak' ? +b.dataset.v : b.dataset.v; render();}));
+document.querySelectorAll('.pick').forEach(b=>b.addEventListener('click',()=>setPicking(map.picking===b.dataset.target?null:b.dataset.target)));
+$('routes').addEventListener('click',e=>{const b=e.target.closest('.show'); if(!b) return; st.sel=st.plans[+b.dataset.idx]; render(); $('map').scrollIntoView({behavior:'smooth',block:'center'});});
+['from','to'].forEach(id=>$(id).addEventListener('input',()=>$(id+'Resolved').textContent=''));
+$('weight').addEventListener('input',render);
+$('bag').addEventListener('input',()=>{$('bagVal').textContent=$('bag').value+' kg'; render();});
+$('form').addEventListener('submit',search);
+
+fetch('/api/status').then(r=>r.json()).then(s=>{
+  st.tmap = s.tmap;
+  if(s.facStations){ fetch('/api/facilities').then(r=>r.json()).then(f=>{ Object.assign(FAC,f); }).catch(()=>{});
+    $('vertData').hidden=false; $('vertData').click(); }
+  $('status').innerHTML = [[!s.demo,'ODsay 경로'],[s.geo!=='osm',`장소 검색: ${{kakao:'카카오',tmap:'TMAP',osm:'OpenStreetMap'}[s.geo]}`],[s.tmap,'TMAP 걷는 길·지도'],[!!s.facStations, s.facStations?`역 시설 ${s.facStations}곳`:'역 시설 정보']]
+    .map(([on,t])=>`<span class="pill${on?' on':''}">${on?'✓':'–'} ${t}</span>`).join('');
+  if(s.demo) banner('<b>데모 모드</b>: ODSAY_KEY 없이 실행 중입니다. 어떤 출발·도착지를 넣어도 서울역 → 해방촌 예시 경로가 나옵니다.');
+  if(s.tmap) initMap();
+}).catch(()=>{});
+</script>
+</body>
+</html>

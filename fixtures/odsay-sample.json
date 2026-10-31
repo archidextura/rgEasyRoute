@@ -1,0 +1,46 @@
+{
+  "result": {
+    "searchType": 0,
+    "busCount": 2,
+    "subwayCount": 1,
+    "subwayBusCount": 0,
+    "path": [
+      {
+        "pathType": 2,
+        "info": { "totalTime": 20, "totalWalk": 430, "payment": 1200, "busTransitCount": 1, "subwayTransitCount": 0, "totalDistance": 2100, "firstStartStation": "서울역", "lastEndStation": "해방촌오거리" },
+        "subPath": [
+          { "trafficType": 3, "distance": 250, "sectionTime": 4 },
+          { "trafficType": 2, "distance": 1650, "sectionTime": 11, "stationCount": 7,
+            "lane": [{ "busNo": "용산02", "type": 3 }],
+            "startName": "서울역", "startX": 126.9735, "startY": 37.5530,
+            "endName": "해방촌오거리", "endX": 126.9850, "endY": 37.5462 },
+          { "trafficType": 3, "distance": 180, "sectionTime": 3 }
+        ]
+      },
+      {
+        "pathType": 2,
+        "info": { "totalTime": 21, "totalWalk": 1070, "payment": 1500, "busTransitCount": 1, "subwayTransitCount": 0, "totalDistance": 2000, "firstStartStation": "서울역버스환승센터", "lastEndStation": "후암동" },
+        "subPath": [
+          { "trafficType": 3, "distance": 120, "sectionTime": 2 },
+          { "trafficType": 2, "distance": 900, "sectionTime": 4, "stationCount": 2,
+            "lane": [{ "busNo": "402", "type": 11 }],
+            "startName": "서울역버스환승센터", "startX": 126.9726, "startY": 37.5536,
+            "endName": "후암동", "endX": 126.9770, "endY": 37.5490 },
+          { "trafficType": 3, "distance": 950, "sectionTime": 15 }
+        ]
+      },
+      {
+        "pathType": 1,
+        "info": { "totalTime": 24, "totalWalk": 1400, "payment": 1400, "busTransitCount": 0, "subwayTransitCount": 1, "totalDistance": 2300, "firstStartStation": "서울역", "lastEndStation": "숙대입구" },
+        "subPath": [
+          { "trafficType": 3, "distance": 200, "sectionTime": 3 },
+          { "trafficType": 1, "distance": 1000, "sectionTime": 2, "stationCount": 1,
+            "lane": [{ "name": "수도권 4호선", "subwayCode": 4 }],
+            "startName": "서울역", "startX": 126.9725, "startY": 37.5530,
+            "endName": "숙대입구", "endX": 126.9721, "endY": 37.5446 },
+          { "trafficType": 3, "distance": 1200, "sectionTime": 19 }
+        ]
+      }
+    ]
+  }
+}
