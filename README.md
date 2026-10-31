@@ -53,6 +53,7 @@ ODsay LAB 대중교통 길찾기 API로 버스·지하철 조합을 받아와, �
 | `.env.example` | 키 입력 양식. `.env`로 복사해서 씁니다. |
 | `public/index.html` | 화면, ODsay 응답 해석, 칼로리 계산 |
 | `tools/import-facilities.js` | 역 시설 CSV → `data/station-facilities.json` 변환 |
+| `prototype/index.html` | 첫 웹 프로토타입 (API 없이 예시 여정 4개와 언덕 vs 마을버스 계산기). 브라우저로 바로 열 수 있습니다. |
 | `fixtures/odsay-sample.json` | 데모 모드용 ODsay 형식 예시 응답 (가짜 데이터) |
 
 서버가 중계하는 외부 API는 네 가지입니다.

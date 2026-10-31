@@ -1,0 +1,450 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>덜 지치는 서울길</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: 등고선 헤더 아래 조건 바 → 순위 카드(체력 타임라인) → 언덕 vs 마을버스 계산기 → 계산 근거 */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --fg:#1d2621; --muted:#5d6b63; --line:#d6ddd8;
+  --accent:#3f8f2a;        /* 마을버스 초록 */
+  --accent-ink:#ffffff; --accent-soft:#e3f0dc;
+  --i0:#cfd8de; --i1:#9cc7a0; --i2:#e8b04a; --i3:#d4583a;  /* 체력 강도 */
+  --good:#2f7d32; --warn:#b06b00;
+  --contour:rgba(63,143,42,.13);
+  --f-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --surface:#1c2420; --fg:#e4ebe6; --muted:#97a69d; --line:#2e3a34;
+  --accent:#6cc04f; --accent-ink:#0f1a0c; --accent-soft:#233420;
+  --i0:#3b4a52; --i1:#4f8a57; --i2:#c9922f; --i3:#e0694a;
+  --good:#7ccf7f; --warn:#e5a64a; --contour:rgba(108,192,79,.12); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a17; --surface:#1c2420; --fg:#e4ebe6; --muted:#97a69d; --line:#2e3a34;
+  --accent:#6cc04f; --accent-ink:#0f1a0c; --accent-soft:#233420;
+  --i0:#3b4a52; --i1:#4f8a57; --i2:#c9922f; --i3:#e0694a;
+  --good:#7ccf7f; --warn:#e5a64a; --contour:rgba(108,192,79,.12); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{text-wrap:balance;margin:0;line-height:1.3}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* header */
+header.hero{position:relative;padding-block:36px 8px;overflow:hidden}
+header.hero::before{content:"";position:absolute;inset:-40% -10% auto auto;width:520px;height:520px;pointer-events:none;
+  background:repeating-radial-gradient(circle at 60% 55%,transparent 0 17px,var(--contour) 17px 18px);border-radius:50%;
+  mask-image:radial-gradient(circle,#000 35%,transparent 70%);-webkit-mask-image:radial-gradient(circle,#000 35%,transparent 70%)}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--accent);font-weight:600}
+header h1{font-size:clamp(28px,5vw,40px);font-weight:700;margin-top:6px;position:relative}
+header p{color:var(--muted);max-width:62ch;margin:10px 0 0;position:relative}
+
+/* controls */
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px 20px;
+  background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ctl > label,.ctl > .lab{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+.ctl.wide{grid-column:1/-1}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:6px 12px;cursor:pointer;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{flex:1;border:0;background:transparent;padding:7px 6px;cursor:pointer;font-size:13.5px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.rangeRow{display:flex;align-items:center;gap:10px}
+.rangeRow input[type=range]{flex:1;accent-color:var(--accent);min-width:0}
+input[type=number]{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+
+/* scenario summary */
+.scen-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:end;gap:8px 20px}
+.scen-head h2{font-size:22px}
+.scen-head p{margin:4px 0 0;color:var(--muted);max-width:60ch}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+/* route cards */
+.routes{display:flex;flex-direction:column;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;
+  grid-template-columns:44px 1fr auto;gap:4px 16px;align-items:start}
+.card.best{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.rank{font-family:var(--f-num);font-size:22px;font-weight:600;color:var(--muted);line-height:1.2}
+.card.best .rank{color:var(--accent)}
+.card .title{min-width:0}
+.card h3{font-size:17px;font-weight:600}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--good)}
+.tag.warn{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.kcal{text-align:right}
+.kcal b{font-family:var(--f-num);font-size:30px;font-weight:600;line-height:1}
+.kcal small{display:block;font-size:12px;color:var(--muted)}
+.card .body{grid-column:2/-1;display:flex;flex-direction:column;gap:12px;margin-top:8px;min-width:0}
+.stats{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:13.5px;color:var(--muted)}
+.stats b{color:var(--fg);font-family:var(--f-num);font-weight:600}
+.strip{display:flex;height:26px;border-radius:6px;overflow:hidden;gap:2px}
+.strip div{min-width:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#1d2621;overflow:hidden;white-space:nowrap}
+.strip-scale{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:-8px}
+.delta{font-size:13.5px}
+.delta .up{color:var(--warn)} .delta .down{color:var(--good)}
+.tip{font-size:14px;background:var(--accent-soft);border-radius:8px;padding:10px 12px;margin:0}
+.tip b{color:var(--good)}
+details summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:520px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.03em}
+td.r,th.r{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+/* calculator */
+section.calc{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:16px}
+section.calc > p{margin:0;color:var(--muted);max-width:65ch}
+.calc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 16px}
+.verdict{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.vbox{border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.vbox.win{border-color:var(--accent);background:var(--accent-soft)}
+.vbox h4{margin:0;font-size:13px;color:var(--muted);font-weight:600}
+.vbox .big{font-family:var(--f-num);font-size:24px;font-weight:600}
+.vbox .sub{font-size:13px;color:var(--muted)}
+.vtext{margin:0;font-size:14.5px}
+
+/* method */
+.method{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px 32px}
+.method h2{font-size:18px;margin-bottom:8px}
+.method ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:6px}
+.method code{font-family:var(--f-num);font-size:12.5px;color:var(--fg)}
+.note{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:16px}
+
+@media (max-width:560px){
+  .card{grid-template-columns:32px 1fr;}
+  .kcal{grid-column:2;text-align:left;margin-top:6px}
+  .kcal b{font-size:26px}
+  .card .body{grid-column:1/-1}
+  .verdict{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:no-preference){.card{transition:border-color .2s}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">서울 대중교통 · 체력 기준 경로 비교</div>
+    <h1>덜 지치는 서울길</h1>
+    <p>빠른 길 말고 덜 힘든 길을 고릅니다. 오르막, 계단, 환승 통로, 서서 가는 시간을 칼로리로 바꿔 비교하고, 언덕을 걷는 대신 마을버스를 타는 편이 나은 구간을 찾아 줍니다.</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="조건">
+    <div class="ctl wide">
+      <span class="lab">예시 여정</span>
+      <div class="chips" id="scenChips"></div>
+    </div>
+    <div class="ctl">
+      <label for="weight">몸무게 (kg)</label>
+      <input id="weight" type="number" min="30" max="150" step="1" value="65">
+    </div>
+    <div class="ctl">
+      <label for="bag">짐 무게 <span class="num" id="bagVal">0 kg</span></label>
+      <div class="rangeRow"><input id="bag" type="range" min="0" max="20" step="1" value="0"></div>
+    </div>
+    <div class="ctl">
+      <span class="lab">시간대 (좌석 확률)</span>
+      <div class="seg" id="timeSeg">
+        <button type="button" data-v="off" aria-pressed="true">평시</button>
+        <button type="button" data-v="peak" aria-pressed="false">출퇴근</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lab">정렬 기준</span>
+      <div class="seg" id="sortSeg">
+        <button type="button" data-v="kcal" aria-pressed="true">최소 체력</button>
+        <button type="button" data-v="knee" aria-pressed="false">무릎 보호</button>
+        <button type="button" data-v="time" aria-pressed="false">최단 시간</button>
+        <button type="button" data-v="xfer" aria-pressed="false">최소 환승</button>
+      </div>
+    </div>
+  </div>
+
+  <section style="display:flex;flex-direction:column;gap:14px">
+    <div class="scen-head">
+      <div><h2 id="scenTitle"></h2><p id="scenNote"></p></div>
+      <div class="legend" aria-label="체력 타임라인 범례">
+        <span><i style="background:var(--i0)"></i>휴식 수준</span>
+        <span><i style="background:var(--i1)"></i>가벼움</span>
+        <span><i style="background:var(--i2)"></i>보통</span>
+        <span><i style="background:var(--i3)"></i>힘듦</span>
+      </div>
+    </div>
+    <div class="routes" id="routes"></div>
+  </section>
+
+  <section class="calc" aria-labelledby="calcH">
+    <h2 id="calcH" style="font-size:20px">언덕길 vs 마을버스 계산기</h2>
+    <p>가까운 거리라도 오르막이면 마을버스가 이득일 수 있습니다. 내 동네 언덕의 길이와 높이, 버스 배차를 넣어 보세요. 고도차는 지도 앱의 등산·자전거 경로나 지형도에서 확인할 수 있습니다.</p>
+    <div class="calc-grid">
+      <div class="ctl"><label for="cDist">언덕길 거리 (m)</label><input id="cDist" type="number" min="50" step="50" value="800"></div>
+      <div class="ctl"><label for="cRise">오르는 높이 (m)</label><input id="cRise" type="number" min="0" step="5" value="45"></div>
+      <div class="ctl"><label for="cToStop">정류장까지 도보 (m)</label><input id="cToStop" type="number" min="0" step="10" value="120"></div>
+      <div class="ctl"><label for="cWait">평균 대기 (분)</label><input id="cWait" type="number" min="0" step="1" value="6"></div>
+      <div class="ctl"><label for="cRide">탑승 시간 (분)</label><input id="cRide" type="number" min="1" step="1" value="6"></div>
+      <div class="ctl"><label for="cFromStop">하차 후 도보 (m)</label><input id="cFromStop" type="number" min="0" step="10" value="80"></div>
+    </div>
+    <div class="verdict" id="verdict"></div>
+    <p class="vtext" id="vtext"></p>
+  </section>
+
+  <section class="method">
+    <div>
+      <h2>칼로리는 이렇게 셉니다</h2>
+      <ul>
+        <li>모든 수치는 <b>휴식 대비 추가 소모량</b>(net kcal)입니다. 가만히 앉아 있어도 쓰는 기초 에너지는 빼서, 몸이 실제로 더 일한 양만 비교합니다.</li>
+        <li><b>걷기</b>: ACSM 보행 공식 <code>VO₂ = 0.1·v + 1.8·v·경사</code> (ml/kg/분)에 1 L O₂ ≈ 5 kcal를 적용. 걷는 속도는 경사에 따라 줄어드는 토블러 함수로 추정합니다.</li>
+        <li><b>계단 오르기</b>: 몸무게+짐을 들어 올리는 일 ÷ 근육 효율 25%. 내려가기는 오르기의 1/3로 보되, 무릎 보호 기준에서는 3배 가중합니다.</li>
+        <li><b>에스컬레이터·엘리베이터·대기</b>: 서 있기 1.3 MET. <b>차내</b>: 앉으면 1.3 MET, 서서 가면 1.6 MET(흔들림 버티기 포함, 추정). 시간대별 입석 확률로 기대값을 냅니다.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>실서비스로 키우려면</h2>
+      <ul>
+        <li><b>경로 후보</b>: ODsay LAB 대중교통 길찾기 API로 버스·지하철 조합을 받아옵니다.</li>
+        <li><b>도보 구간 고도</b>: TMAP 보행자 경로 좌표에 국토지리정보원 수치표고모델(DEM)을 붙여 오르막·내리막을 계산합니다.</li>
+        <li><b>역사 시설</b>: 서울 열린데이터광장의 지하철역 엘리베이터·에스컬레이터 위치 데이터로 출구와 환승 통로를 고릅니다.</li>
+        <li><b>대기·혼잡</b>: 서울시 버스 도착정보와 지하철 혼잡도 데이터로 대기 시간과 좌석 확률을 실측값으로 바꿉니다.</li>
+      </ul>
+    </div>
+    <p class="note" style="grid-column:1/-1;margin:0">예시 여정의 거리·고도·환승 통로 길이는 지도를 보고 잡은 <b>추정치</b>이고, 마을버스 노선 번호와 108계단 경사형 엘리베이터 운행 여부는 이용 전에 다시 확인해야 합니다. 칼로리 공식은 평균적인 성인 기준이라 개인차가 큽니다.</p>
+  </section>
+</div>
+
+<script>
+/* ---------- 예시 데이터 (추정치) ----------
+   seg 종류: walk{m,up,down} stairs{up|down} esc{v} elev{v,wait} wait{min} ride{mode,min,crowd:[평시 입석확률, 출퇴근 입석확률]} */
+const SCEN = [
+ {id:'hbc', chip:'서울역 → 해방촌', title:'서울역 버스환승센터 → 해방촌 신흥시장',
+  note:'남산 자락의 후암동·해방촌은 1.5km 남짓에 고도 약 65m를 올라야 합니다.',
+  routes:[
+   {id:'walk', name:'그냥 걷기', base:true, segs:[
+     {t:'walk',m:450,up:5,l:'서울역 → 후암동 입구 (평지)'},
+     {t:'walk',m:700,up:48,l:'후암동 오르막 (평균 경사 약 7%)'},
+     {t:'walk',m:350,up:17,l:'해방촌 오거리까지 오르막'},
+     {t:'walk',m:200,down:5,l:'신흥시장까지 내리막'}]},
+   {id:'vb', name:'마을버스로 언덕 건너뛰기', tip:'오르막 1km 남짓을 마을버스로 넘깁니다. 기다리는 시간이 생겨도 체력은 가장 적게 듭니다.', segs:[
+     {t:'walk',m:250,up:3,l:'후암동 방면 마을버스 정류장까지'},
+     {t:'wait',min:6,l:'마을버스 대기 (배차 10~12분 가정)'},
+     {t:'ride',mode:'마을버스',min:11,crowd:[0.2,0.5],l:'마을버스 해방촌 방면 (예: 용산02, 노선 확인 필요)'},
+     {t:'walk',m:180,down:4,l:'정류장 → 신흥시장'}]},
+   {id:'lift', name:'108계단 경사형 엘리베이터', tip:'후암동 108계단 옆 경사형 엘리베이터로 계단 구간(약 18m)을 타고 오릅니다. 운행 시간은 확인이 필요합니다.', segs:[
+     {t:'walk',m:750,up:12,l:'서울역 → 108계단 아래'},
+     {t:'elev',v:18,wait:2,l:'경사형 엘리베이터'},
+     {t:'walk',m:400,up:15,l:'해방촌 방면 완만한 오르막'},
+     {t:'walk',m:200,down:5,l:'신흥시장까지 내리막'}]}
+  ]},
+ {id:'sc', chip:'안국역 → 삼청공원', title:'안국역 승강장 → 삼청공원 입구',
+  note:'삼청로는 완만하다가 공원 쪽에서 가팔라집니다. 역 출구 선택만으로도 차이가 납니다.',
+  routes:[
+   {id:'walk', name:'계단 출구 + 걷기', base:true, segs:[
+     {t:'stairs',up:14,l:'승강장 → 지상 (계단 출구)'},
+     {t:'walk',m:1000,up:15,l:'삼청로 완만한 오르막'},
+     {t:'walk',m:800,up:30,l:'삼청동 → 공원 입구 오르막'}]},
+   {id:'esc', name:'에스컬레이터 출구 + 걷기', tip:'걷는 길은 같지만 역 안에서 14m를 계단 대신 에스컬레이터로 오릅니다. 출구까지 몇십 m 더 걷더라도 이득입니다.', segs:[
+     {t:'walk',m:80,l:'에스컬레이터 있는 출구 쪽으로 이동'},
+     {t:'esc',v:14,l:'승강장 → 지상 (에스컬레이터)'},
+     {t:'walk',m:1000,up:15,l:'삼청로 완만한 오르막'},
+     {t:'walk',m:800,up:30,l:'삼청동 → 공원 입구 오르막'}]},
+   {id:'vb', name:'엘리베이터 출구 + 마을버스 종로11', tip:'역 엘리베이터로 올라와 마을버스로 삼청동 오르막을 통째로 넘깁니다. 관광객이 많은 주말엔 서서 갈 수 있습니다.', segs:[
+     {t:'elev',v:14,wait:1.5,l:'승강장 → 지상 (엘리베이터)'},
+     {t:'walk',m:150,l:'마을버스 정류장까지'},
+     {t:'wait',min:5,l:'마을버스 대기'},
+     {t:'ride',mode:'마을버스',min:10,crowd:[0.4,0.6],l:'종로11 삼청공원 방면 (노선 확인 필요)'},
+     {t:'walk',m:150,up:3,l:'정류장 → 공원 입구'}]}
+  ]},
+ {id:'gn', chip:'강남역 → 혜화역', title:'강남역 지상 → 혜화역 지상 (지하철 장거리)',
+  note:'세 경로의 승차 시간은 비슷하지만 환승 통로 길이와 계단, 서서 가는 시간이 다릅니다.',
+  routes:[
+   {id:'sadang', name:'사당 환승 (2→4호선)', base:true, tip:'환승 1회, 통로가 비교적 짧고 에스컬레이터 위주입니다. 4호선 긴 구간에서 자리가 나면 이득이 커집니다.', segs:[
+     {t:'walk',m:120,l:'지상 → 개찰구'},{t:'esc',v:12,l:'승강장으로 (에스컬레이터)'},
+     {t:'wait',min:2,l:'2호선 대기'},
+     {t:'ride',mode:'2호선',min:8,crowd:[0.6,0.95],l:'강남 → 사당 (4개 역)'},
+     {t:'walk',m:200,l:'사당 환승 통로'},{t:'esc',v:8,l:'환승 에스컬레이터'},
+     {t:'wait',min:3,l:'4호선 대기'},
+     {t:'ride',mode:'4호선',min:29,crowd:[0.5,0.9],l:'사당 → 혜화 (14개 역)'},
+     {t:'esc',v:13,l:'지상으로 (에스컬레이터)'},{t:'walk',m:100,l:'출구 → 지상'}]},
+   {id:'gyodae', name:'교대·충무로 환승 (2→3→4호선)', tip:'가장 빠르지만 환승이 2번이고, 일부 통로는 계단을 거쳐야 하는 것으로 가정했습니다.', segs:[
+     {t:'walk',m:120,l:'지상 → 개찰구'},{t:'esc',v:12,l:'승강장으로 (에스컬레이터)'},
+     {t:'wait',min:2,l:'2호선 대기'},
+     {t:'ride',mode:'2호선',min:2,crowd:[0.6,0.95],l:'강남 → 교대 (1개 역)'},
+     {t:'walk',m:280,l:'교대 환승 통로'},{t:'stairs',down:7,l:'환승 계단 (추정)'},
+     {t:'wait',min:3,l:'3호선 대기'},
+     {t:'ride',mode:'3호선',min:18,crowd:[0.45,0.9],l:'교대 → 충무로 (9개 역)'},
+     {t:'walk',m:120,l:'충무로 환승 통로'},{t:'stairs',up:5,l:'환승 계단 (추정)'},
+     {t:'wait',min:3,l:'4호선 대기'},
+     {t:'ride',mode:'4호선',min:6,crowd:[0.4,0.8],l:'충무로 → 혜화 (3개 역)'},
+     {t:'esc',v:13,l:'지상으로 (에스컬레이터)'},{t:'walk',m:100,l:'출구 → 지상'}]},
+   {id:'ddp', name:'동대문역사문화공원 환승 (2→4호선)', tip:'환승은 1번이지만 2호선을 35분 타고, 동대문역사문화공원 2→4호선 환승 통로가 깁니다.', segs:[
+     {t:'walk',m:120,l:'지상 → 개찰구'},{t:'esc',v:12,l:'승강장으로 (에스컬레이터)'},
+     {t:'wait',min:2,l:'2호선 대기'},
+     {t:'ride',mode:'2호선',min:35,crowd:[0.55,0.95],l:'강남 → 동대문역사문화공원 (17개 역)'},
+     {t:'walk',m:380,l:'긴 환승 통로'},{t:'esc',v:6,l:'환승 에스컬레이터'},
+     {t:'wait',min:3,l:'4호선 대기'},
+     {t:'ride',mode:'4호선',min:4,crowd:[0.4,0.8],l:'동대문역사문화공원 → 혜화 (2개 역)'},
+     {t:'esc',v:13,l:'지상으로 (에스컬레이터)'},{t:'walk',m:100,l:'출구 → 지상'}]}
+  ]},
+ {id:'sb', chip:'한성대입구역 → 길상사', title:'한성대입구역 승강장 → 성북동 길상사',
+  note:'성북동 주택가는 1.5km에 고도 약 50m를 오르는 꾸준한 언덕길입니다.',
+  routes:[
+   {id:'walk', name:'그냥 걷기', base:true, segs:[
+     {t:'esc',v:12,l:'승강장 → 지상 (에스컬레이터)'},
+     {t:'walk',m:600,up:10,l:'성북로 완만한 오르막'},
+     {t:'walk',m:900,up:40,l:'성북동 주택가 오르막'}]},
+   {id:'vb', name:'마을버스 성북02', tip:'역 앞에서 마을버스를 타면 오르막 1.5km가 정류장 앞 100m로 줄어듭니다.', segs:[
+     {t:'esc',v:12,l:'승강장 → 지상 (에스컬레이터)'},
+     {t:'walk',m:100,l:'마을버스 정류장까지'},
+     {t:'wait',min:5,l:'마을버스 대기'},
+     {t:'ride',mode:'마을버스',min:8,crowd:[0.2,0.45],l:'성북02 길상사 방면 (노선 확인 필요)'},
+     {t:'walk',m:100,up:4,l:'정류장 → 길상사'}]}
+  ]}
+];
+
+/* ---------- 칼로리 모델 ---------- */
+const KCAL_PER_L = 5;
+const tobler = g => 6*Math.exp(-3.5*Math.abs(g+0.05))*0.9;   // km/h, 평지 약 4.5
+function walkCost(m, up, down, body, load){
+  const g = ((up||0)-(down||0))/m;
+  const v = tobler(g)*1000/60;                // m/분
+  const min = m/v;
+  const vo2 = 0.1*v + (g>0 ? 1.8*v*g : Math.max(0.9*v*g, -0.04*v));   // 휴식분 제외
+  return {min, kcal: vo2*load/1000*KCAL_PER_L*min, g};
+}
+const metNet = (met, body, min) => (met-1)*body*min/60;
+
+function segCost(s, P){
+  const body=P.w, load=P.w+P.bag;
+  switch(s.t){
+    case 'walk': { const r=walkCost(s.m,s.up,s.down,body,load);
+      const kneeW = r.g < -0.03 ? 1.5 : 1;
+      return {min:r.min, kcal:r.kcal, knee:r.kcal*kneeW, walk:s.m, rise:s.up||0}; }
+    case 'stairs': {
+      if(s.up){ const min=s.up/0.25/60; const k=load*9.81*s.up/(0.25*4184)+metNet(1.3,body,min);
+        return {min, kcal:k, knee:k*1.5, stairs:s.up, rise:s.up}; }
+      const min=s.down/0.33/60; const k=load*9.81*s.down/(0.25*4184)/3+metNet(1.3,body,min);
+      return {min, kcal:k, knee:k*3, stairs:s.down}; }
+    case 'esc': { const min=s.v/0.25/60+0.2; const k=metNet(1.3,body,min); return {min,kcal:k,knee:k}; }
+    case 'elev': { const min=s.wait+s.v/60+0.5; const k=metNet(1.3,body,min); return {min,kcal:k,knee:k}; }
+    case 'wait': { const k=metNet(1.3,body,s.min); return {min:s.min,kcal:k,knee:k}; }
+    case 'ride': { const p=s.crowd[P.peak?1:0]; const k=(p*0.6+(1-p)*0.3)*body*s.min/60;
+      return {min:s.min,kcal:k,knee:k,stand:p,ride:1}; }
+  }
+}
+
+function evalRoute(r, P){
+  const segs = r.segs.map(s => ({s, ...segCost(s,P)}));
+  const sum = k => segs.reduce((a,x)=>a+(x[k]||0),0);
+  const rides = sum('ride');
+  return {r, segs, kcal:sum('kcal'), knee:sum('knee'), min:sum('min'),
+    walk:sum('walk'), rise:sum('rise'), stairs:sum('stairs'), xfer:Math.max(0,rides-1), rides};
+}
+
+/* ---------- 상태 ---------- */
+const st = {scen:'hbc', peak:false, sort:'kcal'};
+const $ = id => document.getElementById(id);
+const fmt = (n,d=0) => n.toLocaleString('ko-KR',{maximumFractionDigits:d,minimumFractionDigits:d});
+function params(){
+  const w = Math.min(150, Math.max(30, +$('weight').value || 65));
+  return {w, bag:+$('bag').value, peak:st.peak};
+}
+function intensity(x){ const perMin = x.kcal/Math.max(x.min,0.01)*65/params().w;
+  return perMin < 0.6 ? 'var(--i0)' : perMin < 3 ? 'var(--i1)' : perMin < 5 ? 'var(--i2)' : 'var(--i3)'; }
+const segIcon = {walk:'도보',stairs:'계단',esc:'에스컬',elev:'엘베',wait:'대기',ride:''};
+
+function render(){
+  const sc = SCEN.find(s=>s.id===st.scen), P = params();
+  $('scenTitle').textContent = sc.title; $('scenNote').textContent = sc.note;
+  const res = sc.routes.map(r=>evalRoute(r,P));
+  const base = res.find(x=>x.r.base) || res[0];
+  const keyFn = {kcal:x=>x.kcal, knee:x=>x.knee, time:x=>x.min, xfer:x=>x.xfer*1000+x.kcal}[st.sort];
+  const sorted = [...res].sort((a,b)=>keyFn(a)-keyFn(b));
+  const minOf = k => Math.min(...res.map(x=>x[k]));
+  const maxMin = Math.max(...res.map(x=>x.min));
+
+  $('routes').innerHTML = sorted.map((x,i)=>{
+    const tags=[];
+    if(x.kcal===minOf('kcal')) tags.push('<span class="tag">최소 체력</span>');
+    if(x.knee===minOf('knee')) tags.push('<span class="tag">무릎 부담 최소</span>');
+    if(x.min===minOf('min')) tags.push('<span class="tag">최단 시간</span>');
+    if(x.stairs>=10) tags.push(`<span class="tag warn">계단 ${fmt(x.stairs)}m</span>`);
+    if(x.rise>=40) tags.push(`<span class="tag warn">오르막 ${fmt(x.rise)}m</span>`);
+    const dk = x.kcal-base.kcal, dm = x.min-base.min;
+    const delta = x===base ? '<span>비교 기준 경로</span>' :
+      `<span>${base.r.name} 대비 </span><b class="${dk<0?'down':'up'}">${dk<0?'−':'+'}${fmt(Math.abs(dk))} kcal</b> · <b class="${dm>0?'up':'down'}">${dm>0?'+':'−'}${fmt(Math.abs(dm))}분</b>`;
+    const strip = x.segs.map(g=>{
+      const label = g.s.t==='ride' ? g.s.mode : segIcon[g.s.t];
+      const w = g.min/maxMin*100;
+      return `<div style="flex:0 0 calc(${w.toFixed(2)}% - 2px);background:${intensity(g)}" title="${g.s.l} · ${fmt(g.min,1)}분 · ${fmt(g.kcal,1)} kcal">${w>9?label:''}</div>`;
+    }).join('');
+    const rows = x.segs.map(g=>`<tr><td><span class="dot" style="background:${intensity(g)}"></span>${g.s.l}${g.stand!=null?` <span style="color:var(--muted)">(서서 갈 확률 ${fmt(g.stand*100)}%)</span>`:''}</td>
+      <td class="r">${fmt(g.min,1)}</td><td class="r">${fmt(g.kcal,1)}</td></tr>`).join('');
+    const sortLabel = st.sort==='knee' ? `<small>무릎 부담 점수 ${fmt(x.knee)}</small>` : '';
+    return `<article class="card${i===0?' best':''}">
+      <div class="rank">${i+1}</div>
+      <div class="title"><h3>${x.r.name}</h3><div class="tags">${tags.join('')}</div></div>
+      <div class="kcal"><b>${fmt(x.kcal)}</b><small>kcal 추가 소모</small>${sortLabel}</div>
+      <div class="body">
+        <div class="stats">
+          <span>소요 <b>${fmt(x.min)}분</b></span><span>도보 <b>${fmt(x.walk)}m</b></span>
+          <span>오르는 높이 <b>${fmt(x.rise)}m</b></span><span>계단 <b>${fmt(x.stairs)}m</b></span>
+          <span>환승 <b>${x.xfer}회</b></span>
+        </div>
+        <div class="strip" role="img" aria-label="구간별 시간과 체력 강도">${strip}</div>
+        <div class="delta">${delta}</div>
+        ${x.r.tip?`<p class="tip"><b>묘수</b> ${x.r.tip}</p>`:''}
+        <details><summary>구간별 보기</summary>
+          <div class="tbl-wrap"><table><thead><tr><th>구간</th><th class="r">분</th><th class="r">kcal</th></tr></thead><tbody>${rows}</tbody></table></div>
+        </details>
+      </div></article>`;
+  }).join('');
+  renderCalc();
+}
+
+function renderCalc(){
+  const P = params(), v = id => Math.max(0, +$(id).value || 0);
+  const dist = Math.max(50, v('cDist')), rise = v('cRise');
+  const w = walkCost(dist, rise, 0, P.w, P.w+P.bag);
+  const a = walkCost(Math.max(v('cToStop'),1),0,0,P.w,P.w+P.bag), b = walkCost(Math.max(v('cFromStop'),1),0,0,P.w,P.w+P.bag);
+  const stand = P.peak ? 0.5 : 0.25;
+  const busK = a.kcal + b.kcal + metNet(1.3,P.w,v('cWait')) + (stand*0.6+(1-stand)*0.3)*P.w*v('cRide')/60;
+  const busM = a.min + b.min + v('cWait') + v('cRide');
+  const busWin = busK < w.kcal;
+  $('verdict').innerHTML = `
+    <div class="vbox${busWin?'':' win'}"><h4>언덕 걷기</h4><div class="big">${fmt(w.kcal)} kcal</div>
+      <div class="sub">${fmt(w.min)}분 · 평균 경사 ${fmt(w.g*100,1)}%</div></div>
+    <div class="vbox${busWin?' win':''}"><h4>마을버스</h4><div class="big">${fmt(busK)} kcal</div>
+      <div class="sub">${fmt(busM)}분 (대기 포함)</div></div>`;
+  const saved = w.kcal-busK, extra = busM-w.min;
+  const maxWait = v('cWait') - extra;   // 시간도 같아지는 대기 시간
+  let txt;
+  if(!busWin) txt = '이 조건에선 걷는 편이 체력도 덜 듭니다. 정류장까지 거리가 언덕길과 비슷하면 버스의 이점이 사라집니다.';
+  else if(extra<=0) txt = `마을버스가 <b>${fmt(saved)} kcal</b> 덜 들고 시간도 ${fmt(-extra)}분 빠릅니다. 고민할 필요 없이 타세요.`;
+  else txt = `마을버스가 <b>${fmt(saved)} kcal</b> 덜 들고 ${fmt(extra)}분 더 걸립니다. 1분 기다릴 때마다 약 ${fmt(saved/extra,1)} kcal를 아끼는 셈입니다.` +
+     (maxWait>0 ? ` 대기가 ${fmt(maxWait)}분 이하면 시간까지 같아집니다.` : '');
+  $('vtext').innerHTML = txt;
+}
+
+/* ---------- 이벤트 ---------- */
+$('scenChips').innerHTML = SCEN.map(s=>`<button type="button" class="chip" data-id="${s.id}" aria-pressed="${s.id===st.scen}">${s.chip}</button>`).join('');
+$('scenChips').addEventListener('click',e=>{const b=e.target.closest('.chip'); if(!b) return;
+  st.scen=b.dataset.id; document.querySelectorAll('#scenChips .chip').forEach(c=>c.setAttribute('aria-pressed',c===b)); render();});
+function segGroup(id, fn){ $(id).addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return;
+  $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); fn(b.dataset.v); render();}); }
+segGroup('timeSeg', v=>st.peak = v==='peak');
+segGroup('sortSeg', v=>st.sort = v);
+$('weight').addEventListener('input',render);
+$('bag').addEventListener('input',()=>{$('bagVal').textContent=$('bag').value+' kg'; render();});
+['cDist','cRise','cToStop','cWait','cRide','cFromStop'].forEach(id=>$(id).addEventListener('input',renderCalc));
+render();
+</script>
